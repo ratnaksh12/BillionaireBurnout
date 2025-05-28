@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billionaire Spending Spree</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        .page {
+            display: none;
+            min-height: 100vh; /* Ensure pages take full viewport height */
+        }
+        .active {
+            display: block;
+        }
+        .billionaire-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .billionaire-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e2e8f0;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            background-color: #4f46e5;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .item-card {
+            transition: all 0.3s;
+        }
+        .item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        .count-btn {
+            width: 38px; /* Slightly larger buttons for touch */
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.1rem; /* Larger icon */
+        }
+        .count-btn:hover {
+            background-color: #e5e7eb;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .slide-in {
+            animation: slideIn 0.5s;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Specific styles for sticky header on spend page */
+        #spend-page .header-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #4f46e5; /* Ensure background is visible */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Add shadow for better appearance */
+        }
+
+        /* Receipt styles for Summary Page */
+        .receipt-container {
+            width: 100%; /* Make it responsive */
+            max-width: 400px; /* Max width for receipt look */
+            margin: 40px auto; /* Center it and add space */
+            padding: 20px;
+            border: 1px solid #eee; /* Optional: subtle border */
+            font-family: 'Poppins', sans-serif; /* Or your preferred font */
+            color: #333;
+            background-color: #fff; /* White background */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Optional: subtle shadow */
+            border-radius: 8px; /* Rounded corners */
+        }
+
+        .receipt-container h3 { /* Changed from h2 to h3 to match summary HTML */
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+            color: #333;
+            font-weight: 600; /* Poppins semi-bold */
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px dotted #e2e8f0; /* Dotted line for receipt feel */
+        }
+
+        .receipt-item:last-of-type {
+            border-bottom: none; /* No border for the last item */
+        }
+
+        .item-name-receipt {
+            flex-grow: 1; /* Allows name to take up available space */
+            font-size: 16px;
+        }
+
+        .item-quantity-receipt {
+            width: 40px; /* Fixed width for quantity column */
+            text-align: right;
+            margin-right: 15px; /* Space between quantity and price */
+            font-size: 16px;
+        }
+
+        .item-price-receipt {
+            font-weight: bold;
+            color: #28a745; /* Green color for price */
+            font-size: 16px;
+            text-align: right; /* Ensure price aligns right */
+        }
+
+        .receipt-divider {
+            border: 0;
+            border-top: 2px dashed #ccc; /* Dashed line for total */
+            margin: 20px 0;
+        }
+
+        .receipt-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-weight: bold;
+            font-size: 20px; /* Slightly larger total */
+            color: #4f46e5; /* Indigo color for total */
+        }
+
+        .total-label {
+            color: #333;
+        }
+
+        /* Adjust summary section layout for better receipt integration */
+        #summary-page .bg-white.rounded-lg.shadow-lg.p-6.mb-6 {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center content within the main summary box */
+        }
+
+        #summary-page .grid.grid-cols-1.md\:grid-cols-2.gap-4.mb-6 {
+            width: 100%; /* Ensure the stat grid takes full width */
+            max-width: 600px; /* Limit width for aesthetics */
+            margin: 0 auto 24px auto; /* Center stats and add bottom margin */
+        }
+    </style>
+</head>
+<body>
+    <div id="home-page" class="page active">
+        <div class="min-h-screen flex flex-col items-center justify-center p-5 bg-gradient-to-br from-blue-500 to-indigo-600">
+            <div class="text-center">
+                <div class="mb-6">
+                    <i class="fas fa-money-bill-wave text-white text-6xl mb-4"></i>
+                </div>
+                <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">Billionaire Burnout</h1>
+                <p class="text-xl text-white opacity-90 mb-8">Choose a billionaire and spend their fortune!</p>
+                <button id="start-btn" class="bg-white text-indigo-600 font-semibold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                    Start Game
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="selection-page" class="page">
+        <header class="bg-indigo-600 text-white p-4 text-center shadow-md">
+            <h1 class="text-2xl font-bold">Billionaire Burnout</h1>
+            <p>Choose a billionaire and spend their fortune!</p>
+        </header>
+        
+        <div class="container mx-auto px-4 py-8">
+            <h2 class="text-2xl font-bold text-center mb-8">Select a Billionaire</h2>
+            
+            <div id="billionaire-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </div>
+    </div>
+
+    <div id="spend-page" class="page">
+        <header class="header-sticky bg-indigo-600 text-white p-4">
+            <div class="container mx-auto flex flex-col md:flex-row items-center justify-between">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <button id="back-to-selection" class="mr-4 bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <div id="billionaire-avatar" class="w-12 h-12 rounded-full bg-white mr-3 overflow-hidden flex-shrink-0">
+                            </div>
+                        <div>
+                            <h1 id="billionaire-name" class="text-xl font-bold">Billionaire Name</h1>
+                            <p id="billionaire-title" class="text-sm opacity-90">Title</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold" id="money-counter">$0</div>
+                    <div class="text-sm opacity-90">remaining to spend</div>
+                </div>
+            </div>
+            <div class="container mx-auto mt-4">
+                <div class="flex justify-between mb-2 text-sm">
+                    <span>0% spent</span>
+                    <span id="percent-spent">0%</span>
+                    <span>100%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="container mx-auto p-4 py-8">
+            <div class="flex flex-col sm:flex-row justify-end mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
+                <button id="reset-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-redo mr-1"></i> Reset
+                </button>
+                <button id="summary-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-list-alt mr-1"></i> Summary
+                </button>
+            </div>
+            
+            <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                </div>
+        </div>
+    </div>
+
+    <div id="summary-page" class="page">
+        <header class="bg-indigo-600 text-white p-4 shadow-md">
+            <div class="container mx-auto flex items-center">
+                <button id="back-to-spend" class="mr-4 bg-white bg-opacity-20 p-2 rounded-full hover:bg-opacity-30 transition-colors">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-xl font-bold">Purchase Summary</h1>
+            </div>
+        </header>
+        
+        <div class="container mx-auto p-4 py-8">
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 id="summary-billionaire-name" class="text-xl font-bold">Billionaire Name</h2>
+                        <p id="summary-billionaire-title" class="text-sm text-gray-600">Title</p>
+                    </div>
+                    <div id="summary-billionaire-avatar" class="w-16 h-16 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                        </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Total Money</p>
+                        <p id="summary-total-money" class="text-xl font-bold">$0</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Money Spent</p>
+                        <p id="summary-money-spent" class="text-xl font-bold text-indigo-600">$0</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Money Left</p>
+                        <p id="summary-money-left" class="text-xl font-bold text-green-600">$0</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Percentage Spent</p>
+                        <p id="summary-percentage" class="text-xl font-bold text-purple-600">0%</p>
+                    </div>
+                </div>
+                
+                <div class="receipt-container">
+                    <h3>Your Receipt</h3>
+                    <div id="purchased-items-list">
+                        </div>
+                    <hr class="receipt-divider">
+                    <div class="receipt-total">
+                        <span class="total-label">TOTAL SPENT</span>
+                        <span class="total-amount" id="receipt-total-amount">$0</span>
+                    </div>
+                </div>
+                </div>
+            
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="new-billionaire-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-user-tie mr-1"></i> Choose New Billionaire
+                </button>
+                <button id="continue-shopping-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-shopping-cart mr-1"></i> Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const billionaires = [
+            {
+                id: "elon",
+                name: "Elon Musk",
+                title: "CEO of Tesla & SpaceX",
+                netWorth: 342000000000,
+                avatar: "images/elon_musk.jpg",
+                icon: "fas fa-rocket"
+            },
+            {
+                id: "mark",
+                name: "Mark Zuckerberg",
+                title: "CEO of Meta",
+                netWorth: 216000000000,
+                avatar: "images/mark_zuckerberg.jpg",
+                icon: "fab fa-facebook"
+            },
+            {
+                id: "jeff",
+                name: "Jeff Bezos",
+                title: "Founder of Amazon",
+                netWorth: 215000000000,
+                avatar: "images/jeff_bezos.webp",
+                icon: "fab fa-amazon"
+            },
+            {
+                id: "larry_e",
+                name: "Larry Ellison",
+                title: "Co-founder of Oracle",
+                netWorth: 192000000000,
+                avatar: "images/Larry_Ellison.png",
+                icon: "fas fa-database"
+            },
+            {
+                id: "bernard",
+                name: "Bernard Arnault",
+                title: "CEO of LVMH",
+                netWorth: 178000000000,
+                avatar: "images/Bernard_Arnault.jpg",
+                icon: "fas fa-shopping-bag"
+            },
+            {
+                id: "warren",
+                name: "Warren Buffett",
+                title: "CEO of Berkshire Hathaway",
+                netWorth: 154000000000,
+                avatar: "images/Warren_Buffett.webp",
+                icon: "fas fa-chart-line"
+            },
+            {
+                id: "larry_p",
+                name: "Larry Page",
+                title: "Co-founder of Google",
+                netWorth: 144000000000,
+                avatar: "images/Larry_Page.jpg",
+                icon: "fab fa-google"
+            },
+            {
+                id: "bill",
+                name: "Bill Gates",
+                title: "Co-founder of Microsoft",
+                netWorth: 108000000000,
+                avatar: "images/Bill_Gates.jpg",
+                icon: "fab fa-windows"
+            },
+            {
+                id: "mukesh",
+                name: "Mukesh Ambani",
+                title: "Chairman of Reliance Industries",
+                netWorth: 92500000000,
+                avatar: "images/Mukesh_Ambani.jpg",
+                icon: "fas fa-industry"
+            },
+            {
+                id: "gautam",
+                name: "Gautam Adani",
+                title: "Chairman of Adani Group",
+                netWorth: 65500000000,
+                avatar: "images/Gautam_Adani.jpg",
+                icon: "fas fa-ship"
+            }
+        ];
+
+        const items = [
+            {
+                id: "big-mac",
+                name: "Big Mac",
+                price: 2,
+                image: "images/big-mac.jpg"
+            },
+            {
+                id: "flip-flops",
+                name: "Flip Flops",
+                price: 3,
+                image: "images/flip-flops.jpg"
+            },
+            {
+                id: "coca-cola-pack",
+                name: "Coca-Cola Pack",
+                price: 5,
+                image: "images/coca-cola-pack.jpg"
+            },
+            {
+                id: "movie-ticket",
+                name: "Movie Ticket",
+                price: 12,
+                image: "images/movie-ticket.jpg"
+            },
+            {
+                id: "book",
+                name: "Book",
+                price: 15,
+                image: "images/book.jpg"
+            },
+            {
+                id: "lobster-dinner",
+                name: "Lobster Dinner",
+                price: 45,
+                image: "images/lobster-dinner.jpg"
+            },
+            {
+                id: "video-game",
+                name: "Video Game",
+                price: 60,
+                image: "images/video-game.jpg"
+            },
+            {
+                id: "amazon-echo",
+                name: "Amazon Echo",
+                price: 99,
+                image: "images/amazon-echo.jpg"
+            },
+            {
+                id: "year-of-netflix",
+                name: "Year of Netflix",
+                price: 100,
+                image: "images/year-of-netflix.jpg"
+            },
+            {
+                id: "air-jordans",
+                name: "Air Jordans",
+                price: 125,
+                image: "images/jordans.jpg"
+            },
+            {
+                id: "airpods",
+                name: "Airpods",
+                price: 199,
+                image: "images/airpods.jpg"
+            },
+            {
+                id: "gaming-console",
+                name: "Gaming Console",
+                price: 299,
+                image: "images/console.jpg"
+            },
+            {
+                id: "drone",
+                name: "Drone",
+                price: 350,
+                image: "images/drone.jpg"
+            },
+            {
+                id: "smartphone",
+                name: "Smartphone",
+                price: 699,
+                image: "images/smartphone.jpg"
+            },
+            {
+                id: "bike",
+                name: "Bike",
+                price: 800,
+                image: "images/bike.jpg"
+            },
+            {
+                id: "kitten",
+                name: "Kitten",
+                price: 1500,
+                image: "images/kitten.jpg"
+            },
+            {
+                id: "puppy",
+                name: "Puppy",
+                price: 1500,
+                image: "images/puppy.jpg"
+            },
+            {
+                id: "auto-rickshaw",
+                name: "Auto Rickshaw",
+                price: 2300,
+                image: "images/auto-rickshaw.jpg"
+            },
+            {
+                id: "horse",
+                name: "Horse",
+                price: 2500,
+                image: "images/horse.jpg"
+            },
+            {
+                id: "acre-of-farmland",
+                name: "Acre of Farmland",
+                price: 3000,
+                image: "images/acre-of-farmland.jpg"
+            },
+            {
+                id: "designer-handbag",
+                name: "Designer Handbag",
+                price: 5500,
+                image: "images/designer-handbag.jpg"
+            },
+            {
+                id: "hot-tub",
+                name: "Hot Tub",
+                price: 6000,
+                image: "images/hot-tub.jpg"
+            },
+            {
+                id: "luxury-wine",
+                name: "Luxury Wine",
+                price: 7000,
+                image: "images/luxury-wine.jpg"
+            },
+            {
+                id: "diamond-ring",
+                name: "Diamond Ring",
+                price: 10000,
+                image: "images/diamond-ring.jpg"
+            },
+            {
+                id: "jet-ski",
+                name: "Jet Ski",
+                price: 12000,
+                image: "images/jet-ski.jpg"
+            },
+            {
+                id: "rolex",
+                name: "Rolex",
+                price: 15000,
+                image: "images/rolex.jpg"
+            },
+            {
+                id: "ford-f-150",
+                name: "Ford F-150",
+                price: 30000,
+                image: "images/ford.jpg"
+            },
+            {
+                id: "tesla",
+                name: "Tesla",
+                price: 75000,
+                image: "images/tesla.jpg"
+            },
+            {
+                id: "monster-truck",
+                name: "Monster Truck",
+                price: 150000,
+                image: "images/truck.jpg"
+            },
+            {
+                id: "ferrari",
+                name: "Ferrari",
+                price: 250000,
+                image: "images/ferrari.jpg"
+            },
+            {
+                id: "single-family-home",
+                name: "Single Family Home",
+                price: 300000,
+                image: "images/home.jpg"
+            },
+            {
+                id: "gold-bar",
+                name: "Gold Bar",
+                price: 700000,
+                image: "images/gold.jpg"
+            },
+            {
+                id: "mcdonalds-franchise",
+                name: "McDonalds Franchise",
+                price: 1500000,
+                image: "images/mc.jpg"
+            },
+            {
+                id: "superbowl-ad",
+                name: "Superbowl Ad",
+                price: 5250000,
+                image: "images/superbowl.jpg"
+            },
+            {
+                id: "yacht",
+                name: "Yacht",
+                price: 7500000,
+                image: "images/yacht.jpg"
+            },
+            {
+                id: "m1-abrams",
+                name: "M1 Abrams",
+                price: 8000000,
+                image: "images/m1-abrams.jpg"
+            },
+            {
+                id: "formula-1-car",
+                name: "Formula 1 Car",
+                price: 15000000,
+                image: "images/formula-1-car.jpg"
+            },
+            {
+                id: "apache-helicopter",
+                name: "Apache Helicopter",
+                price: 31000000,
+                image: "images/apache-helicopter.jpg"
+            },
+            {
+                id: "mansion",
+                name: "Mansion",
+                price: 45000000,
+                image: "images/mansion.jpg"
+            },
+            {
+                id: "make-a-movie",
+                name: "Make a Movie",
+                price: 100000000,
+                image: "images/make-a-movie.jpg"
+            },
+            {
+                id: "boeing-747",
+                name: "Boeing 747",
+                price: 148000000,
+                image: "images/boeing-747.jpg"
+            },
+            {
+                id: "mona-lisa",
+                name: "Mona Lisa",
+                price: 780000000,
+                image: "images/mona.jpg"
+            },
+            {
+                id: "skyscraper",
+                name: "Skyscraper",
+                price: 850000000,
+                image: "images/skyscraper.jpg"
+            },
+            {
+                id: "cruise-ship",
+                name: "Cruise Ship",
+                price: 930000000,
+                image: "images/cruise-ship.jpg"
+            },
+            {
+                id: "nba-team",
+                name: "NBA Team",
+                price: 2120000000,
+                image: "images/lebron.jpg"
+            }
+        ];
+
+        // State variables
+        let currentPage = "home-page";
+        let selectedBillionaire = null;
+        let cart = {}; // Stores {itemId: quantity, ...}
+        let moneySpent = 0;
+
+        // Variables for hold-to-repeat functionality
+        let holdTimeout;
+        let holdInterval;
+        const INITIAL_DELAY = 300; // ms before rapid repeat starts
+        const REPEAT_INTERVAL = 100; // ms between repeats
+
+        // Utility function to format money
+        function formatMoney(amount) {
+            return amount.toLocaleString('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            });
+        }
+
+        // Utility function to format numbers for display (e.g., 1.5B) - not currently used but kept for potential future use
+        function formatNumber(num) {
+            if (num >= 1_000_000_000) {
+                return (num / 1_000_000_000).toFixed(1) + 'B';
+            }
+            if (num >= 1_000_000) {
+                return (num / 1_000_000).toFixed(1) + 'M';
+            }
+            if (num >= 1_000) {
+                return (num / 1_000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        // Navigation functions
+        function navigateTo(pageId) {
+            document.getElementById(currentPage).classList.remove('active');
+            document.getElementById(pageId).classList.add('active', 'fade-in');
+            currentPage = pageId;
+        }
+
+        // Initialize billionaire selection grid
+        function initBillionaireGrid() {
+            const grid = document.getElementById('billionaire-grid');
+            grid.innerHTML = '';
+            
+            billionaires.forEach(billionaire => {
+                const card = document.createElement('div');
+                card.classList.add('billionaire-card', 'bg-white', 'rounded-lg', 'shadow-md', 'overflow-hidden', 'slide-in');
+                card.innerHTML = `
+                    <div class="p-4">
+                        <div class="flex items-center mb-4">
+                            <div class="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 mr-4">
+                                <img src="${billionaire.avatar}" alt="${billionaire.name}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold">${billionaire.name}</h3>
+                                <p class="text-sm text-gray-600">${billionaire.title}</p>
+                            </div>
+                        </div>
+                        <div class="text-xl font-bold text-green-600 mb-3">
+                            ${formatMoney(billionaire.netWorth)}
+                        </div>
+                        <button class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            Spend Money
+                        </button>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => selectBillionaire(billionaire.id));
+                grid.appendChild(card);
+            });
+        }
+
+        // Select billionaire function
+        function selectBillionaire(billionaireId) {
+            selectedBillionaire = billionaires.find(b => b.id === billionaireId);
+            moneySpent = 0;
+            cart = {}; // Reset cart when new billionaire is selected
+            
+            const avatarElement = document.getElementById('billionaire-avatar');
+            avatarElement.innerHTML = `<img src="${selectedBillionaire.avatar}" alt="${selectedBillionaire.name}" class="w-full h-full object-cover">`;
+            
+            document.getElementById('billionaire-name').textContent = selectedBillionaire.name;
+            // FIX: Corrected typo from selectedBelesanaire.title to selectedBillionaire.title
+            document.getElementById('billionaire-title').textContent = selectedBillionaire.title; 
+            
+            updateMoneyCounter();
+            updateProgressBar();
+            initItemsGrid(); // Re-initialize items grid to reflect empty cart
+            
+            navigateTo('spend-page');
+        }
+
+        // Initialize items grid
+        function initItemsGrid() {
+            const grid = document.getElementById('items-grid');
+            grid.innerHTML = '';
+            
+            items.forEach(item => {
+                // Initialize cart item if not exists
+                if (!cart[item.id]) {
+                    cart[item.id] = 0;
+                }
+                
+                const card = document.createElement('div');
+                card.classList.add('item-card', 'bg-white', 'rounded-lg', 'shadow-md', 'overflow-hidden');
+                card.innerHTML = `
+                    <div class="h-40 overflow-hidden bg-gray-100">
+                        <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-4 flex flex-col items-center text-center">
+                        <h3 class="text-lg font-medium mb-1">${item.name}</h3>
+                        <p class="text-indigo-600 font-bold mb-3">${formatMoney(item.price)}</p>
+                        <div class="flex items-center justify-center w-full">
+                            <button class="count-btn minus-btn" data-item-id="${item.id}">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <span class="item-count mx-3 text-xl font-medium" data-item-id="${item.id}">${cart[item.id]}</span>
+                            <button class="count-btn plus-btn" data-item-id="${item.id}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+                
+                const minusBtn = card.querySelector('.minus-btn');
+                const plusBtn = card.querySelector('.plus-btn');
+
+                // Add event listeners for hold-to-repeat
+                // Plus button
+                plusBtn.addEventListener('mousedown', (e) => {
+                    // Prevent default to avoid text selection issues on some browsers
+                    e.preventDefault(); 
+                    startHoldAction(incrementItem, item.id, item.price);
+                });
+                plusBtn.addEventListener('mouseup', stopHoldAction);
+                plusBtn.addEventListener('mouseleave', stopHoldAction);
+                // Also add a click listener for single clicks (if not already handled by mousedown/timeout)
+                plusBtn.addEventListener('click', () => {
+                    // Only trigger if a hold action isn't already active (prevents double counting on quick clicks)
+                    if (!holdTimeout && !holdInterval) {
+                        incrementItem(item.id, item.price);
+                    }
+                });
+
+
+                // Minus button
+                minusBtn.addEventListener('mousedown', (e) => {
+                    // Prevent default
+                    e.preventDefault();
+                    startHoldAction(decrementItem, item.id, item.price);
+                });
+                minusBtn.addEventListener('mouseup', stopHoldAction);
+                minusBtn.addEventListener('mouseleave', stopHoldAction);
+                 // Also add a click listener for single clicks
+                minusBtn.addEventListener('click', () => {
+                    // Only trigger if a hold action isn't already active (prevents double counting on quick clicks)
+                    if (!holdTimeout && !holdInterval) {
+                        decrementItem(item.id, item.price);
+                    }
+                });
+            });
+        }
+
+        // Functions for hold-to-repeat logic
+        function startHoldAction(actionFunction, itemId, price) {
+            // Clear any existing timeouts/intervals to prevent conflicts
+            stopHoldAction(); 
+
+            // Execute once immediately on mousedown for responsiveness
+            actionFunction(itemId, price); 
+
+            // Set a timeout to start repeating after a delay
+            holdTimeout = setTimeout(() => {
+                holdInterval = setInterval(() => {
+                    actionFunction(itemId, price);
+                }, REPEAT_INTERVAL);
+            }, INITIAL_DELAY);
+        }
+
+        function stopHoldAction() {
+            clearTimeout(holdTimeout);
+            clearInterval(holdInterval);
+            holdTimeout = null;
+            holdInterval = null;
+        }
+
+        // Increment item count
+        function incrementItem(itemId, price) {
+            const remainingMoney = selectedBillionaire.netWorth - moneySpent;
+            
+            if (price <= remainingMoney) {
+                cart[itemId]++;
+                moneySpent += price;
+                updateItemCount(itemId);
+                updateMoneyCounter();
+                updateProgressBar();
+            } else {
+                // Optional: A more subtle notification instead of alert might be better for UX
+                // console.log("Not enough money to buy another " + items.find(i => i.id === itemId).name + "!");
+            }
+        }
+
+        // Decrement item count
+        function decrementItem(itemId, price) {
+            if (cart[itemId] > 0) {
+                cart[itemId]--;
+                moneySpent -= price;
+                updateItemCount(itemId);
+                updateMoneyCounter();
+                updateProgressBar();
+            }
+        }
+
+        // Update item count in the UI
+        function updateItemCount(itemId) {
+            const countElements = document.querySelectorAll(`.item-count[data-item-id="${itemId}"]`);
+            countElements.forEach(el => {
+                el.textContent = cart[itemId];
+            });
+        }
+
+        // Update money counter in the UI
+        function updateMoneyCounter() {
+            const remainingMoney = selectedBillionaire.netWorth - moneySpent;
+            document.getElementById('money-counter').textContent = formatMoney(remainingMoney);
+        }
+
+        // Update progress bar in the UI
+        function updateProgressBar() {
+            const percentage = (moneySpent / selectedBillionaire.netWorth) * 100;
+            document.getElementById('progress-bar-fill').style.width = `${percentage}%`;
+            document.getElementById('percent-spent').textContent = `${percentage.toFixed(2)}%`;
+        }
+
+        // Show summary page
+        function showSummary() {
+            // Update billionaire info
+            document.getElementById('summary-billionaire-name').textContent = selectedBillionaire.name;
+            document.getElementById('summary-billionaire-title').textContent = selectedBillionaire.title;
+            
+            const avatarElement = document.getElementById('summary-billionaire-avatar');
+            avatarElement.innerHTML = `<img src="${selectedBillionaire.avatar}" alt="${selectedBillionaire.name}" class="w-full h-full object-cover">`;
+            
+            // Update money info
+            document.getElementById('summary-total-money').textContent = formatMoney(selectedBillionaire.netWorth);
+            document.getElementById('summary-money-spent').textContent = formatMoney(moneySpent);
+            document.getElementById('summary-money-left').textContent = formatMoney(selectedBillionaire.netWorth - moneySpent);
+            const percentageSpent = (moneySpent / selectedBillionaire.netWorth) * 100;
+            document.getElementById('summary-percentage').textContent = `${percentageSpent.toFixed(2)}%`;
+
+            // Populate purchased items list (the "receipt" part)
+            const purchasedItemsList = document.getElementById('purchased-items-list');
+            purchasedItemsList.innerHTML = ''; // Clear previous items
+
+            let hasPurchasedItems = false;
+            for (const itemId in cart) {
+                const quantity = cart[itemId];
+                if (quantity > 0) {
+                    hasPurchasedItems = true;
+                    const item = items.find(i => i.id === itemId);
+                    if (item) {
+                        const itemTotalPrice = item.price * quantity;
+                        const itemDiv = document.createElement('div');
+                        itemDiv.classList.add('receipt-item');
+                        itemDiv.innerHTML = `
+                            <span class="item-name-receipt">${item.name}</span>
+                            <span class="item-quantity-receipt">x${quantity}</span>
+                            <span class="item-price-receipt">${formatMoney(itemTotalPrice)}</span>
+                        `;
+                        purchasedItemsList.appendChild(itemDiv);
+                    }
+                }
+            }
+
+            // Display "No items purchased yet." message if cart is empty
+            // FIX: Changed logic for showing "No items purchased yet."
+            if (!hasPurchasedItems) {
+                const p = document.createElement('p');
+                p.classList.add('text-gray-500', 'italic', 'text-center', 'py-4');
+                p.textContent = 'No items purchased yet.';
+                purchasedItemsList.appendChild(p);
+            }
+
+            // Update the total amount in the receipt
+            document.getElementById('receipt-total-amount').textContent = formatMoney(moneySpent);
+
+            navigateTo('summary-page');
+        }
+
+        // Event Listeners
+        document.getElementById('start-btn').addEventListener('click', () => {
+            initBillionaireGrid();
+            navigateTo('selection-page');
+        });
+
+        document.getElementById('back-to-selection').addEventListener('click', () => {
+            navigateTo('selection-page');
+        });
+
+        document.getElementById('summary-btn').addEventListener('click', showSummary);
+
+        document.getElementById('back-to-spend').addEventListener('click', () => {
+            navigateTo('spend-page');
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if (selectedBillionaire) {
+                moneySpent = 0;
+                cart = {}; // Clear cart
+                updateMoneyCounter();
+                updateProgressBar();
+                initItemsGrid(); // Re-render item cards with 0 quantities
+            }
+        });
+
+        document.getElementById('new-billionaire-btn').addEventListener('click', () => {
+            moneySpent = 0;
+            cart = {};
+            selectedBillionaire = null;
+            navigateTo('selection-page');
+        });
+
+        document.getElementById('continue-shopping-btn').addEventListener('click', () => {
+            navigateTo('spend-page');
+        });
+
+        // Initial setup
+        // No initial setup needed beyond displaying home-page as active, which is done by default
+    </script>
+</body>
+</html>
